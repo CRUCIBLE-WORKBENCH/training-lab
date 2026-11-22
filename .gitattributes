@@ -1,0 +1,11 @@
+# ===============================================================================
+# Ignytion IO - TRAINER LAB
+# Copyright (c) 2026 Ignytion IO. All rights reserved.
+# Author      : IGNYTION_TECH
+# File        : trainer-lab/.gitattributes
+# Created     : 2026-11-20
+# Description : Line-ending rules so shell scripts and Makefiles stay LF on every clone.
+# ===============================================================================
+*.sh text eol=lf
+Makefile text eol=lf
+*.sv text eol=lf

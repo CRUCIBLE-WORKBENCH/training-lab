@@ -1,0 +1,15 @@
+# ===============================================================================
+# Ignytion IO - TRAINER LAB
+# Copyright (c) 2026 Ignytion IO. All rights reserved.
+# Author      : IGNYTION_TECH
+# File        : trainer-lab/.gitignore
+# Created     : 2026-11-20
+# Description : Keeps build output, the fetched UVM library and waveforms out of git.
+# ===============================================================================
+build/
+third_party/
+*.vcd
+*.fst
+core
+core.*
+obj_dir/
