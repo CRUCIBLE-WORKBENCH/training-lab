@@ -5,9 +5,9 @@
 # Author      : IGNYTION_TECH
 # File        : trainer-lab/scripts/preflight.sh
 # Created     : 2026-11-20
-# Description : Read-only session preflight: location, memory, display and tool reachability (slides 5-6, 14).
+# Description : Read-only session preflight: location, memory, display and tool reachability.
 # ===============================================================================
-# Session preflight (slides 5-6, 14). Reports facts only; it changes nothing.
+# Session preflight. Reports facts only; it changes nothing.
 set -u
 echo "== Where am I =="
 pwd; df -h . | tail -1

@@ -5,10 +5,10 @@
 # Author      : IGNYTION_TECH
 # File        : trainer-lab/scripts/fetch-uvm.sh
 # Created     : 2026-11-20
-# Description : Fetches the pinned Verilator-compatible Accellera UVM library into third_party/ (slide 16).
+# Description : Fetches the pinned Verilator-compatible Accellera UVM library into third_party/.
 # ===============================================================================
 # Fetch the Verilator-compatible Accellera UVM library at a pinned revision.
-# Needed only for the UVM session (slide 16). Safe to re-run.
+# Needed only for the UVM session. Safe to re-run.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO=https://github.com/verilator/uvm.git

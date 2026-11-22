@@ -4,7 +4,7 @@
 // Author      : IGNYTION_TECH
 // File        : trainer-lab/uvm_hello/tb.sv
 // Created     : 2026-11-20
-// Description : UVM test for hello using the Verilator-compatible Accellera UVM library (slide 16).
+// Description : UVM test for hello using the Verilator-compatible Accellera UVM library.
 // ===============================================================================
 `timescale 1ns/1ps
 `include "uvm_macros.svh"

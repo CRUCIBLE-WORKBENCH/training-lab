@@ -4,7 +4,7 @@
 // Author      : IGNYTION_TECH
 // File        : trainer-lab/tb/tb.sv
 // Created     : 2026-11-20
-// Description : Self-checking timed testbench for hello (slide 12).
+// Description : Self-checking timed testbench for hello.
 // ===============================================================================
 `timescale 1ns/1ps
 module tb;

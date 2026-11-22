@@ -5,9 +5,9 @@
 # Author      : IGNYTION_TECH
 # File        : trainer-lab/scripts/smoke.sh
 # Created     : 2026-11-20
-# Description : Day-0 smoke test: lint, simulation, mutant rejection and, if fetched, UVM hello (slides 11-16).
+# Description : Day-0 smoke test: Python, Verilog, SystemVerilog, mutant rejection and, if fetched, UVM hello.
 # ===============================================================================
-# Day-0 smoke test for slides 11-14 (and 16 when UVM is fetched).
+# Day-0 smoke test for the SystemVerilog hello (and UVM hello when UVM is fetched).
 # It never edits rtl/: the mutation runs on a copy under build/.
 # Uses "igny run" when igny is on PATH; override with RUN= to use plain PATH tools.
 set -uo pipefail
@@ -39,6 +39,28 @@ $RUN verilator --binary --timing --trace --assert --top-module tb --Mdir build/m
 out=$(cd build && ./mutant/Vtb 2>&1); rc=$?
 [ $rc -ne 0 ] && echo "$out" | grep -qi "mismatch" && ! echo "$out" | grep -q "^PASS" \
   && check "mutant is rejected (nonzero exit, no PASS)" ok || { echo "$out (exit $rc)"; check "mutant is rejected (nonzero exit, no PASS)" bad; }
+
+# Basic Python script: igny run script inside Crucible when igny is used, else python3.
+if [ -n "$RUN" ]; then PYRUN="${RUN/ run/ run script}"; else PYRUN="python3"; fi
+out=$($PYRUN python/hello.py 2>&1); rc=$?
+[ $rc -eq 0 ] && echo "$out" | grep -q "PASS: 4 input combinations" \
+  && check "Python hello passes (exit 0 + PASS text)" ok || { echo "$out"; check "Python hello passes (exit 0 + PASS text)" bad; }
+
+# Basic Verilog-2001 counter: correct design passes, a mutant (+2) is rejected.
+rm -rf build/counter build/counter_bad; mkdir -p build/mutant_src
+$RUN verilator --binary --timing --trace --top-module counter_tb --Mdir build/counter \
+  rtl/counter.v tb/counter_tb.v >build/counter.build.log 2>&1 \
+  && check "counter builds" ok || { tail -20 build/counter.build.log; check "counter builds" bad; }
+out=$(cd build && ./counter/Vcounter_tb 2>&1); rc=$?
+[ $rc -eq 0 ] && echo "$out" | grep -q "PASS: counted 20 cycles" \
+  && check "counter passes (exit 0 + PASS text)" ok || { echo "$out"; check "counter passes (exit 0 + PASS text)" bad; }
+sed "s/q + 4'd1/q + 4'd2/" rtl/counter.v > build/mutant_src/counter.v
+$RUN verilator --binary --timing --trace --top-module counter_tb --Mdir build/counter_bad \
+  build/mutant_src/counter.v tb/counter_tb.v >build/counter_bad.build.log 2>&1 \
+  && check "counter mutant (+2) builds" ok || { tail -20 build/counter_bad.build.log; check "counter mutant (+2) builds" bad; }
+out=$(cd build && ./counter_bad/Vcounter_tb 2>&1); rc=$?
+[ $rc -ne 0 ] && echo "$out" | grep -q "^FAIL" && ! echo "$out" | grep -q "^PASS" \
+  && check "counter mutant is rejected (nonzero exit, FAIL text)" ok || { echo "$out (exit $rc)"; check "counter mutant is rejected (nonzero exit, FAIL text)" bad; }
 
 if [ -f third_party/uvm/src/uvm_pkg.sv ]; then
   out=$($RUN make -C uvm_hello sim JOBS=2 2>&1); rc=$?

@@ -12,7 +12,7 @@ Description : Follow-along guide for the trainer onboarding session.
 # Trainer Lab: follow-along repository
 
 Starter files for the **trainer onboarding session** (Ignytion IO).
-Clone it, run the preflight, and you can type along with each slide.
+Clone it, run the preflight, and you can type along with the session.
 
 ## 1. Before the session (10 minutes)
 
@@ -25,28 +25,12 @@ cd ~/trainer-lab
 ./scripts/preflight.sh
 ```
 
-`preflight.sh` only reports: where you are, memory, display forwarding (GTKWave and KLayout need it),
+`preflight.sh` only reports: where you are, memory, display forwarding (GUI tools need it),
 the `igny` version, and which tools are reachable. Send a screenshot of anything marked `missing`
 or `WARNING` before the session.
 
-## 2. Follow along with the slides
+## 2. Workspace
 
-| Slides | What you do | Where it lives |
-|---|---|---|
-| 4–6 | Concepts, `igny --version`, `igny doctor`, `igny status` | nothing to clone |
-| 7 | Create the environment and workspace | see "Workspace" below |
-| 8–10 | `igny tool install ...`, inspect bindings, `igny run` | nothing to clone |
-| 11–12 | The RTL fixture and self-checking testbench | `rtl/hello.sv`, `tb/tb.sv` |
-| 13–14 | Lint, build, simulate, view the waveform, mutate | commands below |
-| 16 | UVM hello on Verilator | `uvm_hello/`, `scripts/fetch-uvm.sh` |
-
-Slides 15 and 17–38 (coverage, firmware, synthesis, timing, physical design, handoff gates) rely on
-files the sponsor's starter project supplies, such as `fw/main.c`, `pnr/synth.ys` and the lab Make
-targets. They are **not in this repository**. We will rehearse those together once that project is chosen.
-
-### Workspace (slide 7)
-
-Slide 7 creates a new workspace folder. If you cloned this repo instead, make the clone the workspace.
 The names below are examples; any names work if you use them consistently:
 
 ```bash
@@ -59,12 +43,35 @@ igny workspace show
 If `igny` refuses because the folder is not empty, say so in the session. Do not force it.
 The repo ships no `crucible.toml` or `crucible.lock`; each trainer creates their own.
 
-### Frontend lab (slides 11–14)
+## 3. Basic Python script
+
+`python/hello.py` prints the truth table of an AND gate and checks it. Run it inside the Crucible
+environment, or with the system Python, and compare:
+
+```bash
+igny run script python/hello.py     # runs inside the resolved Crucible environment
+python3 python/hello.py             # same script with the system Python
+make py                             # shortcut: uses igny run script when igny is on PATH
+```
+
+Expect `PASS: 4 input combinations` and exit status 0.
+
+## 4. Basic Verilog and SystemVerilog
+
+Plain Verilog-2001, a 4-bit counter with a self-checking testbench (`rtl/counter.v`, `tb/counter_tb.v`):
 
 ```bash
 mkdir -p build
+igny run verilator --binary --timing --trace --top-module counter_tb \
+  --Mdir build/counter rtl/counter.v tb/counter_tb.v
+(cd build && ./counter/Vcounter_tb)    # expect: PASS: counted 20 cycles, wrap included
+make verilog                           # shortcut for the two commands above
+```
+
+SystemVerilog, a 2-input AND gate with a timed testbench (`rtl/hello.sv`, `tb/tb.sv`):
+
+```bash
 igny run verilator --lint-only -Wall rtl/hello.sv
-igny run verible-verilog-lint rtl/hello.sv
 igny run verilator --binary --timing --trace \
   --assert --top-module tb --Mdir build/hello \
   rtl/hello.sv tb/tb.sv
@@ -72,11 +79,26 @@ igny run verilator --binary --timing --trace \
 echo $?                             # expect: 0
 ```
 
-The testbench dumps `hello.vcd` into the directory you run it from, so `igny run gtkwave build/hello.vcd`
-opens it. For the mutation exercise, change `a_i & b_i` to `a_i | b_i` in `rtl/hello.sv`, rebuild, rerun,
-and require a nonzero exit plus a `Mismatch`. Restore the file afterwards (`git checkout rtl/hello.sv`).
+Both testbenches dump a `.vcd` waveform into the folder you run them from, so for example
+`igny run gtkwave build/hello.vcd` opens it (needs display forwarding). For a mutation exercise, change
+`a_i & b_i` to `a_i | b_i` in `rtl/hello.sv` (or `+ 4'd1` to `+ 4'd2` in `rtl/counter.v`), rebuild and rerun:
+the testbench must exit nonzero and print a mismatch. Restore the file afterwards with `git checkout rtl/`.
 
-### UVM hello (slide 16)
+## 5. UVM: one extra file, which we give you
+
+Using UVM here needs a Crucible registry file called `verilator.toml` in
+`~/.ignytion/.crucible/registry/tools/`.
+
+**We will give you this file at the session. It is not in this repository.** When you have it:
+
+```bash
+./scripts/install-verilator-toml.sh /path/to/verilator.toml
+# or: make uvm-toml TOML=/path/to/verilator.toml
+igny tool show verilator
+```
+
+The script copies the file into place, keeps any file already there as `verilator.toml.bak-<timestamp>`,
+and refuses a file that is not the verilator tool definition. Then run UVM hello:
 
 ```bash
 ./scripts/fetch-uvm.sh                       # pinned Accellera UVM for Verilator, into third_party/
@@ -90,13 +112,15 @@ still print `TEST PASSED`. The Makefile therefore grades the log: `sim` needs `T
 `UVM_ERROR` / `UVM_FATAL`, and `negative` is expected to exit nonzero. `make uvm-negative` at the top
 level succeeds only when that rejection happens.
 
-## 3. Make shortcuts and the one-command check
+## 6. Make shortcuts and the one-command check
 
 ```bash
 make help        # list every target
-make lint sim    # slides 13 (lint, build, run)
-make mutant      # slide 14 mutation on a copy; must be rejected
-make uvm-fetch uvm-sim uvm-negative   # slide 16
+make py          # basic Python script
+make verilog     # basic Verilog counter
+make lint sim    # SystemVerilog hello: lint, build, run
+make mutant      # mutation on a copy; must be rejected
+make uvm-fetch uvm-sim uvm-negative
 make smoke       # same as ./scripts/smoke.sh
 ```
 
@@ -116,20 +140,23 @@ hello and its negative control. It never edits `rtl/`. Exit status is 0 only whe
 ## Known limits
 
 - The UVM revision was validated with Crucible's Verilator 5.047. A distro Verilator 5.032 fails to
-  elaborate it (`PKGNODECL`). Use the Verilator that `igny` provides for slide 16.
+  elaborate it (`PKGNODECL`). Use the Verilator that `igny` provides for UVM.
 - `fetch-uvm.sh` needs internet access to GitHub. Run it before the session.
-- `verible-verilog-lint`, `gtkwave` and `iverilog` come from `igny tool install` (slide 8).
+- `verible-verilog-lint`, `gtkwave` and `iverilog` come from `igny tool install`.
 - Tool versions and catalog availability depend on the `igny` release you have installed.
 
 ## Layout
 
 ```text
-Makefile            shortcuts: lint, sim, wave, mutant, uvm-*, smoke, clean
-rtl/hello.sv        2-input AND gate (slide 11)
-tb/tb.sv            self-checking timed testbench (slide 12)
-uvm_hello/          UVM test, Makefile with build / sim / negative (slide 16)
-scripts/            preflight.sh, smoke.sh, fetch-uvm.sh
-build/, third_party/   generated or fetched, git-ignored
+Makefile              shortcuts: py, verilog, lint, sim, wave, mutant, uvm-*, smoke, clean
+python/hello.py       basic Python script
+rtl/counter.v         basic Verilog-2001 counter
+tb/counter_tb.v       self-checking testbench for the counter
+rtl/hello.sv          2-input AND gate (SystemVerilog)
+tb/tb.sv              self-checking timed testbench for the AND gate
+uvm_hello/            UVM test, Makefile with build / sim / negative
+scripts/              preflight.sh, smoke.sh, fetch-uvm.sh, install-verilator-toml.sh
+build/, third_party/  generated or fetched, git-ignored
 ```
 
 Teaching fixtures authored for this onboarding. They are not a product design and make no signoff claim.

@@ -4,7 +4,7 @@
 // Author      : IGNYTION_TECH
 // File        : trainer-lab/rtl/hello.sv
 // Created     : 2026-11-20
-// Description : 2-input AND gate used as the first lint and simulation fixture (slide 11).
+// Description : 2-input AND gate used as the first lint and simulation fixture.
 // ===============================================================================
 `timescale 1ns/1ps
 module hello (

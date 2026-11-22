@@ -4,9 +4,9 @@
 # Author      : IGNYTION_TECH
 # File        : trainer-lab/uvm_hello/Makefile
 # Created     : 2026-11-20
-# Description : Build, sim and negative targets for UVM hello on Verilator, with log grading (slide 16).
+# Description : Build, sim and negative targets for UVM hello on Verilator, with log grading.
 # ===============================================================================
-# UVM hello on Verilator (slide 16). Targets: build, sim, negative.
+# UVM hello on Verilator. Targets: build, sim, negative.
 # UVM_HOME defaults to the library fetched by scripts/fetch-uvm.sh.
 #
 # UVM ends a run with $finish even after UVM_FATAL, so the simulator's exit

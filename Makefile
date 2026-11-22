@@ -4,9 +4,9 @@
 # Author      : IGNYTION_TECH
 # File        : trainer-lab/Makefile
 # Created     : 2026-11-20
-# Description : Top-level lab shortcuts: lint, sim, mutant, UVM and smoke targets.
+# Description : Top-level lab shortcuts: py, verilog, lint, sim, mutant, UVM and smoke targets.
 # ===============================================================================
-# Trainer lab: shortcuts for slides 11-16. Run `make help`.
+# Trainer lab: shortcuts for the lab. Run `make help`.
 #
 # Tools run through `igny run` when igny is on PATH. Override with RUN= to use
 # plain PATH tools, or RUN="igny run --env trainer" to pick an environment.
@@ -16,15 +16,19 @@ BUILD    := build
 SIM_ARGS := --binary --timing --trace --assert --top-module tb
 
 .DEFAULT_GOAL := help
-.PHONY: help preflight lint build sim wave mutant uvm-fetch uvm-build uvm-sim uvm-negative smoke clean distclean
+.PHONY: help preflight lint build sim wave mutant py verilog uvm-toml uvm-fetch uvm-build uvm-sim uvm-negative smoke clean distclean
 
 help:
-	@echo "Frontend lab (slides 11-14)"
+	@echo "SystemVerilog hello"
 	@echo "  make lint          Verilator -Wall lint of rtl/hello.sv"
 	@echo "  make sim           build and run the self-checking testbench"
 	@echo "  make wave          open build/hello.vcd in GTKWave (needs display)"
 	@echo "  make mutant        rebuild with a|b on a COPY; must be rejected"
-	@echo "UVM hello (slide 16)"
+	@echo "Basics"
+	@echo "  make py            run python/hello.py (via igny run script when igny is present)"
+	@echo "  make verilog       build and run the plain Verilog counter example"
+	@echo "UVM hello"
+	@echo "  make uvm-toml TOML=<file>  install the verilator.toml we give you (needed for UVM)"
 	@echo "  make uvm-fetch     fetch the pinned UVM library into third_party/"
 	@echo "  make uvm-sim       build and run UVM hello"
 	@echo "  make uvm-negative  injected failure; succeeds only if it is rejected"
@@ -61,6 +65,22 @@ mutant:
 	@if (cd $(BUILD) && ./mutant/Vtb); then \
 	  echo "FAIL: the mutant passed; the testbench missed the fault"; exit 1; \
 	else echo "OK: the mutant was rejected (nonzero exit)"; fi
+
+PY_RUN := $(if $(RUN),$(RUN:run=run script),python3)
+
+py:
+	$(PY_RUN) python/hello.py
+
+$(BUILD)/counter/Vcounter_tb: rtl/counter.v tb/counter_tb.v
+	mkdir -p $(BUILD)
+	$(RUN) verilator --binary --timing --trace --top-module counter_tb --Mdir $(BUILD)/counter rtl/counter.v tb/counter_tb.v
+
+verilog: $(BUILD)/counter/Vcounter_tb
+	cd $(BUILD) && ./counter/Vcounter_tb
+
+uvm-toml:
+	@test -n "$(TOML)" || { echo "Usage: make uvm-toml TOML=/path/to/verilator.toml (the file we give you)"; exit 2; }
+	./scripts/install-verilator-toml.sh "$(TOML)"
 
 uvm-fetch:
 	./scripts/fetch-uvm.sh
